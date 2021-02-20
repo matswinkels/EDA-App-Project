@@ -1,0 +1,62 @@
+@import url('https://fonts.googleapis.com/css2?family=Lobster&family=Roboto&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans&display=swap');
+
+/* HEADER */
+
+.main-header .logo {
+    font-family: Lobster;
+    font-size: 30px;
+}
+
+
+/* SIDEBAR */
+
+.skin-blue .sidebar a {
+    font-family: OpenSans, sans-serif;
+    font-size: 20px;
+}
+
+.sidebar-menu>li>a>.fa, .sidebar-menu>li>a>.glyphicon, .sidebar-menu>li>a>.ion {
+    margin-right: 10px;
+}
+
+section.sidebar .shiny-input-container {
+    padding: 0px 15px 0px 15px;
+    
+    white-space: normal;
+}
+
+.progress {
+    margin-bottom: 5px;
+}
+
+.form-group {
+    margin-bottom: 5px;
+}
+
+section.sidebar .shiny-bound-input.action-button, section.sidebar .shiny-bound-input.action-link {
+    margin: 6px 10px 6px 10px;
+    display: block;
+    
+}
+
+label {
+    margin-top: 2px;
+}
+
+
+
+/* BODY */
+
+h1.tabTitle {
+    margin-top: 5px;
+    padding-left: 15px;
+}
+
+section.content {
+   padding-top: 5px; 
+}
+
+span.glyphicon.glyphicon-triangle-top {
+    padding-left: 5px;
+}
