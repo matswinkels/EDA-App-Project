@@ -70,8 +70,8 @@ shinyUI(
             
             shinydashboard::sidebarMenu(
                 menuItem(text = 'Home', tabName = 'menuHome', icon = icon('home')),
-                menuItem(text = 'Eksploracja', tabName = 'menuExplore', icon = icon('map')),
                 menuItem(text = 'Przetwarzanie', tabName = 'menuPrepare', icon = icon('cog')),
+                menuItem(text = 'Eksploracja', tabName = 'menuExplore', icon = icon('map')),
                 menuItem(text = 'Wizualizacja', tabName = 'menuVisualise', icon = icon('chart-area')),
                 menuItem(text = 'Informacje o aplikacji', tabName = 'menuInfo', icon = icon('info-circle'))
             )
@@ -88,38 +88,75 @@ shinyUI(
                 ),
                 
                 tabItem(
-                    tabName = 'menuExplore',
-                    tags$h1(class = 'tabTitle', 'Eksploracja zbioru danych'),
-                    
-                    fluidRow(
-                        column(12,
-                            box(width = 12,
-                                collapsible = TRUE
-                            )
-                        )
-                    )
-                    
-                ),
-                
-                tabItem(
                     tabName = 'menuPrepare',
                     tags$h1(class = 'tabTitle', 'Przetwarzanie  zbioru danych'),
                     
                     fluidRow(
                         column(12,
-                            box(width = 4,
+                            tabBox(width = 4,
                                 height = 150,
-                                shinyWidgets::pickerInput(
-                                    inputId = 'select.cols',
-                                    label = 'Wybor cech',
-                                    choices = c(),
-                                    options = list('actions-box' = TRUE),
-                                    multiple = TRUE
-                                ),
-                                actionButton('modify.cols', 'Potwierdz', width = 180)
+                                
+                                tabPanel(
+                                    title = 'Wybierz cechy',
+                                    shinyWidgets::pickerInput(
+                                        inputId = 'select.cols',
+                                        label = NULL,
+                                        choices = c(),
+                                        options = list('actions-box' = TRUE),
+                                        multiple = TRUE,
+                                        width = '100%'
+                                    ),
+                                    
+                                    div(style = "margin-top: 20px; text-align:center",
+                                        actionButton('select.cols.btn', 'Potwierdz', width = 180)
+                                    ) 
+                                )
+                                
                             ),
-                            box(width = 4, height = 150),
-                            box(width = 4, height = 150)
+                            
+                            tabBox(
+                                width = 4, 
+                                height = 150,
+                                
+                                tabPanel(
+                                    title = 'Sortuj obserwacje wedlug cechy',
+                                    selectInput(
+                                        inputId = 'sort.cols',
+                                        label = NULL,
+                                        choices = c(),
+                                        multiple = FALSE,
+                                        width = '100%'
+                                    ),
+                                    column(6,
+                                           div(style = "margin-top: 5px; text-align:center",
+                                               actionButton('sort.cols.btn', 'Potwierdz', width = 180)
+                                           ),   
+                                    ),
+                                    column(6,
+                                           div(style = "text-align:center",
+                                               checkboxInput('is.sort.desc', 'Sortuj malejaco', value = FALSE)
+                                           )   
+                                           
+                                    )
+                                )
+                                
+                                
+                                    
+                            ),
+                            
+                            tabBox(
+                                width = 4, 
+                                height = 150,
+                                
+                                tabPanel(
+                                    title = 'Usun wartosci puste',
+                                    textOutput('return.na.number')
+                                ),
+                                
+                                tabPanel(
+                                    title = 'Zamien wartosci puste'
+                                )
+                            )
                         )
                     ),
                     
@@ -135,6 +172,20 @@ shinyUI(
                                     up = TRUE,
                                     icon = icon('download')
                                 ))
+                        )
+                    )
+                    
+                ),
+                
+                tabItem(
+                    tabName = 'menuExplore',
+                    tags$h1(class = 'tabTitle', 'Eksploracja zbioru danych'),
+                    
+                    fluidRow(
+                        column(12,
+                               box(width = 12,
+                                   collapsible = TRUE
+                               )
                         )
                     )
                     
