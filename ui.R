@@ -2,6 +2,8 @@ library(shiny)
 library(shinydashboard)
 library(shinyWidgets)
 
+box1.h <- 250
+
 shinyUI(
     shinydashboard::dashboardPage(
         skin = 'blue',
@@ -94,7 +96,7 @@ shinyUI(
                     fluidRow(
                         column(12,
                             tabBox(width = 4,
-                                height = 150,
+                                height = box1.h,
                                 
                                 tabPanel(
                                     title = 'Wybierz cechy',
@@ -116,7 +118,7 @@ shinyUI(
                             
                             tabBox(
                                 width = 4, 
-                                height = 150,
+                                height = box1.h,
                                 
                                 tabPanel(
                                     title = 'Sortuj obserwacje wedlug cechy',
@@ -146,15 +148,34 @@ shinyUI(
                             
                             tabBox(
                                 width = 4, 
-                                height = 150,
+                                height = box1.h,
                                 
                                 tabPanel(
                                     title = 'Usun wartosci puste',
-                                    textOutput('return.na.number')
+                                    textOutput('return.na.number'),
+                                    div(style = "margin-top: 35px; text-align:center",
+                                        actionButton('delete.nas', 'Usun', width = 180)
+                                    )
                                 ),
                                 
                                 tabPanel(
-                                    title = 'Zamien wartosci puste'
+                                    title = 'Zamien wartosci puste',
+                                    div(
+                                        style = "text-align:center",
+                                        selectInput('impute.col', label = NULL, choices = c(), width = '100%'),
+                                        selectInput('impute.method', label = 'Wybierz metode', width = '100%', choices = c(
+                                            'Srednia', 'Mediana', 'Zero')),
+                                        actionButton('apply.impute', 'Uzupelnij', width = 180)
+                                    )
+                                    
+                                ),
+                                
+                                tabPanel(
+                                    title = 'MICE',
+                                    div(
+                                        style = "text-align:center",
+                                        actionButton('apply.MICE', 'Uzupelnianie wielowymiarowe', width = 200)
+                                    )
                                 )
                             )
                         )

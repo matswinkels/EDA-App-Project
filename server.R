@@ -2,6 +2,7 @@ library(shiny)
 library(DT)
 library(tidyverse)
 library(data.table)
+library(mice)
 
 shinyServer(function(input, output, session) {
   values <- reactiveValues(      # ZMIENNE
@@ -9,7 +10,7 @@ shinyServer(function(input, output, session) {
     dataset.modified = NULL,     # Zmodyfikowany dataset
     col.names.original = NULL,   # Wszystkie (oryginalne) nazwy kolumn (cech)
     col.names.modified = NULL,   # Zmodyfikowane nazwy kolumn (cech)
-    na.values = NULL)
+    na.values = 0)
   
   observeEvent(input$input.file, {
     # Pierwsze wczytanie danych
@@ -85,9 +86,19 @@ shinyServer(function(input, output, session) {
     )
   })
   
+  observe({
+    # Aktualizuje nazwy kolumn, w ktorych mozna uzupelniac wartosci puste
+    updateSelectInput(
+      session,
+      inputId = 'impute.col',
+      choices = values$col.names.modified
+      
+    )
+  })
+  
   
   observeEvent(input$select.cols.btn, {
-    # Potwierdza modyfikacje kolumn
+    # Potwierdza modyfikacje liczby kolumn
     if (!is.null(input$input.file) & !is.null(values$col.names.original)) {
       values$dataset.modified <- data.table::copy(values$dataset.original) # Przywraca modified -> original
       values$dataset.modified <- values$dataset.modified %>% 
@@ -99,7 +110,7 @@ shinyServer(function(input, output, session) {
   })
   
   observeEvent(input$sort.cols.btn, {
-    # Potwierdza sortowanie kolumn po zmiennej
+    # Potwierdza posortowanie danych po wybranej zmiennej
     if (!is.null(input$input.file) & !is.null(values$col.names.original)) {
       # values$dataset.modified <- data.table::copy(values$dataset.original) # Przywraca modified -> original
       if (input$is.sort.desc) {
@@ -114,8 +125,60 @@ shinyServer(function(input, output, session) {
     }
   })
   
+  observeEvent(input$delete.nas, {
+    # Potwierdza usuniecie obserwacji zawierajacych wartosc NULL
+    if (!is.null(input$input.file)) {
+      values$dataset.modified <- na.omit(values$dataset.modified)
+      values$na.values <- sum(is.na(values$dataset.modified))
+    }
+  })
+  
+  
+  observeEvent(input$apply.impute, {
+    # Potwierdza uzupelnienie wartosci pustych wybranych kolumn przy uzyciu wybranej metody uzupelniania
+    if (!is.null(input$input.file)) {
+      tryCatch({
+        if (input$impute.method == 'Srednia') {
+          mean.val <- round(as.numeric(lapply(values$dataset.modified[input$impute.col], mean, na.rm = TRUE)), 2)
+          values$dataset.modified[input$impute.col][is.na(values$dataset.modified[input$impute.col])] <- mean.val
+        }
+        
+        else if (input$impute.method == 'Mediana') {
+          median.val <- round(as.numeric(lapply(values$dataset.modified[input$impute.col], median, na.rm = TRUE)), 2)
+          values$dataset.modified[input$impute.col][is.na(values$dataset.modified[input$impute.col])] <- median.val
+        }
+        
+        else if (input$impute.method == 'Zero') {
+          values$dataset.modified[input$impute.col][is.na(values$dataset.modified[input$impute.col])] <- 0
+        }
+        
+        values$na.values <- sum(is.na(values$dataset.modified))
+      },
+      
+      warning = function(warn){
+        showNotification(paste0(warn), type = 'warning', duration = 8, closeButton = TRUE)
+        
+      },
+      error = function(err){
+        showNotification(paste0(err), type = 'err', duration = 8, closeButton = TRUE)
+      }
+      
+      )
+      
+      
+    }
+  })
+  
+  observeEvent(input$apply.MICE, {
+    # Uzupelnianie wielowymiarowe
+    numerical <- unlist(lapply(values$dataset.modified, is.numeric))
+    imp <- mice::mice(values$dataset.modified[, numerical])
+    values$dataset.modified[, numerical] <- mice::complete(imp)
+  })
+  
+  
   output$render.table <- DT::renderDT({
-    # Renderuje tabele
+    # Renderuje tabele w zakladce 'przetwarzanie'
     if (is.null(input$input.file))
       return (NULL)
     values$dataset.modified
@@ -126,13 +189,15 @@ shinyServer(function(input, output, session) {
     # Pobranie tabeli jako .csv
     filename = function(){'download.csv'},
     content = function(fname) {
-      write.csv(datasetDownload(), fname)
+      write.csv(datasetDownload(), fname, row.names = FALSE)
     }
   )
   
   output$return.na.number <- renderText({
-    # Zwraca liczbe obserwacji zawierajacych wartosc NULL
-    as.character(values$na.values)
+    # Zwraca informacje o liczbie obserwacji zawierajacych wartosc NULL
+    paste('Wartosci puste w zbiorze: ', values$na.values)
   })
+
+
   
 })
