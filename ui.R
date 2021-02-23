@@ -18,8 +18,16 @@ shinyUI(
             dropdownMenu(
                 type = 'notifications',
                 headerText = 'Opis dzialania aplikacji',
-                icon = icon('question-circle'),
+                icon = icon('question-circle', 'fa-2x'),
                 badgeStatus = NULL
+            ),
+            tags$li(
+                a(
+                    icon('github', 'fa-2x'),
+                    href = 'https://github.com/matswinkels/EDA-App-Project',
+                    target = '_blank'
+                ),
+                class = 'dropdown'
             )
         ),
         
@@ -83,11 +91,15 @@ shinyUI(
         
         shinydashboard::dashboardBody(
             tabItems(
-
+                
+                ########### HOME ###########
+                
                 tabItem(
                     tabName = 'menuHome',
                     tags$h1(class = 'tabTitle', 'Home')
                 ),
+                
+                ########### PRZETWARZANIE ###########
                 
                 tabItem(
                     tabName = 'menuPrepare',
@@ -159,10 +171,10 @@ shinyUI(
                                 ),
                                 
                                 tabPanel(
-                                    title = 'Zamien wartosci puste',
+                                    title = 'Uzupelnij wartosci puste',
                                     div(
                                         style = "text-align:center",
-                                        selectInput('impute.col', label = NULL, choices = c(), width = '100%'),
+                                        selectInput('impute.col', label = 'Wybierz ceche', choices = c(), width = '100%'),
                                         selectInput('impute.method', label = 'Wybierz metode', width = '100%', choices = c(
                                             'Srednia', 'Mediana', 'Zero')),
                                         actionButton('apply.impute', 'Uzupelnij', width = 180)
@@ -174,7 +186,8 @@ shinyUI(
                                     title = 'MICE',
                                     div(
                                         style = "text-align:center",
-                                        actionButton('apply.MICE', 'Uzupelnianie wielowymiarowe', width = 200)
+                                        p('Uzupelnianie wielokrotne MICE (Multiple Imputation by Chained Equation)'),
+                                        actionButton('apply.MICE', 'Zastosuj', width = 200)
                                     )
                                 )
                             )
@@ -198,6 +211,8 @@ shinyUI(
                     
                 ),
                 
+                ########### EKSPLORACJA ###########
+                
                 tabItem(
                     tabName = 'menuExplore',
                     tags$h1(class = 'tabTitle', 'Eksploracja zbioru danych'),
@@ -212,10 +227,14 @@ shinyUI(
                     
                 ),
                 
+                ########### WIZUALIZACJA ###########
+                
                 tabItem(
                     tabName = 'menuVisualise',
                     tags$h1(class = 'tabTitle', 'Wizualizacja zbioru danych'),
                 ),
+                
+                ########### INFO ###########
                 
                 tabItem(
                     tabName = 'menuInfo',

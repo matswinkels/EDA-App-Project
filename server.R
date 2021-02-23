@@ -5,11 +5,12 @@ library(data.table)
 library(mice)
 
 shinyServer(function(input, output, session) {
-  values <- reactiveValues(      # ZMIENNE
-    dataset.original = NULL,     # Pierwotny wczytany dataset
-    dataset.modified = NULL,     # Zmodyfikowany dataset
-    col.names.original = NULL,   # Wszystkie (oryginalne) nazwy kolumn (cech)
-    col.names.modified = NULL,   # Zmodyfikowane nazwy kolumn (cech)
+  values <- reactiveValues(        # ZMIENNE
+    dataset.original = NULL,       # Pierwotny wczytany dataset
+    dataset.modified = NULL,       # Zmodyfikowany dataset
+    col.names.original = NULL,     # Wszystkie (oryginalne) nazwy kolumn (cech)
+    col.names.modified = NULL,     # Zmodyfikowane nazwy kolumn (cech)
+    col.names.modified.num = NULL, # Zmodyfikowane nazwy kolumn (tylko numeric)
     na.values = 0)
   
   observeEvent(input$input.file, {
@@ -25,16 +26,21 @@ shinyServer(function(input, output, session) {
         values$dataset.modified <- data.table::copy(values$dataset.original)
         values$col.names.original <- colnames(values$dataset.original)
         values$col.names.modified <- values$col.names.original
+        values$col.names.modified.num <- colnames(values$dataset.modified %>% select_if(is.numeric))
         values$na.values <- sum(is.na(values$dataset.modified))
       },
       warning = function(warn){
-        showNotification(paste0(warn), type = 'warning', duration = 8, closeButton = TRUE)
+        showNotification(paste0(warn), type = 'warning', duration = 10, closeButton = TRUE)
       },
       error = function(err){
-        showNotification(paste0(err), type = 'err', duration = 8, closeButton = TRUE)
+        showNotification(paste0(err), type = 'err', duration = 10, closeButton = TRUE)
       }
       )
     }
+  })
+  
+  updateValues <- reactive({
+    return (NULL)
   })
   
   observeEvent(input$load.again, {
@@ -53,6 +59,7 @@ shinyServer(function(input, output, session) {
         
         values$col.names.original <- colnames(values$dataset.original)
         values$col.names.modified <- values$col.names.original
+        values$col.names.modified.num <- colnames(values$dataset.modified %>% select_if(is.numeric))
         values$na.values <- sum(is.na(values$dataset.modified))
         
         
@@ -91,7 +98,7 @@ shinyServer(function(input, output, session) {
     updateSelectInput(
       session,
       inputId = 'impute.col',
-      choices = values$col.names.modified
+      choices = values$col.names.modified.num
       
     )
   })
@@ -105,6 +112,7 @@ shinyServer(function(input, output, session) {
         select(input$select.cols)
       
       values$col.names.modified <- colnames(values$dataset.modified)
+      values$col.names.modified.num <- colnames(values$dataset.modified %>% select_if(is.numeric))
       values$na.values <- sum(is.na(values$dataset.modified))
     }
   })
@@ -156,11 +164,11 @@ shinyServer(function(input, output, session) {
       },
       
       warning = function(warn){
-        showNotification(paste0(warn), type = 'warning', duration = 8, closeButton = TRUE)
+        showNotification(paste0(warn), type = 'warning', duration = 10, closeButton = TRUE)
         
       },
       error = function(err){
-        showNotification(paste0(err), type = 'err', duration = 8, closeButton = TRUE)
+        showNotification(paste0(err), type = 'err', duration = 10, closeButton = TRUE)
       }
       
       )
@@ -170,12 +178,14 @@ shinyServer(function(input, output, session) {
   })
   
   observeEvent(input$apply.MICE, {
-    # Uzupelnianie wielowymiarowe
+    # Uzupelnianie wielokrotne MICE
     numerical <- unlist(lapply(values$dataset.modified, is.numeric))
-    imp <- mice::mice(values$dataset.modified[, numerical])
-    values$dataset.modified[, numerical] <- mice::complete(imp)
+    if( ncol(values$dataset.modified[, numerical]) > 2) {
+      imp <- mice::mice(values$dataset.modified[, numerical])
+      values$dataset.modified[, numerical] <- mice::complete(imp)
+    }
+    
   })
-  
   
   output$render.table <- DT::renderDT({
     # Renderuje tabele w zakladce 'przetwarzanie'
