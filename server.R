@@ -3,14 +3,18 @@ library(DT)
 library(tidyverse)
 library(data.table)
 library(mice)
+library(lubridate)
 
 shinyServer(function(input, output, session) {
-  values <- reactiveValues(        # ZMIENNE
-    dataset.original = NULL,       # Pierwotny wczytany dataset
-    dataset.modified = NULL,       # Zmodyfikowany dataset
-    col.names.original = NULL,     # Wszystkie (oryginalne) nazwy kolumn (cech)
-    col.names.modified = NULL,     # Zmodyfikowane nazwy kolumn (cech)
-    col.names.modified.num = NULL, # Zmodyfikowane nazwy kolumn (tylko numeric)
+  values <- reactiveValues(         # ZMIENNE
+    dataset.original = NULL,        # Pierwotny wczytany dataset
+    dataset.modified = NULL,        # Zmodyfikowany dataset
+    col.names.original = NULL,      # Wszystkie (oryginalne) nazwy kolumn (cech)
+    col.names.modified = NULL,      # Zmodyfikowane nazwy kolumn (cech)
+    col.names.modified.num = NULL,  # Zmodyfikowane nazwy kolumn (tylko numeric)
+    col.names.modified.fac = NULL,  # Zmodyfikowane nazwy kolumn (tylko factor)
+    col.names.modified.cha = NULL,  # Zmodyfikowane nazwy kolumn (tylko character)
+    col.names.modified.dat = NULL,  # Zmodyfikowane nazwy kolumn (tylko date)
     na.values = 0)
   
   observeEvent(input$input.file, {
@@ -27,6 +31,9 @@ shinyServer(function(input, output, session) {
         values$col.names.original <- colnames(values$dataset.original)
         values$col.names.modified <- values$col.names.original
         values$col.names.modified.num <- colnames(values$dataset.modified %>% select_if(is.numeric))
+        values$col.names.modified.fac <- colnames(values$dataset.modified %>% select_if(is.factor))
+        values$col.names.modified.cha <- colnames(values$dataset.modified %>% select_if(is.character))
+        values$col.names.modified.dat <- colnames(values$dataset.modified %>% select_if(lubridate::is.Date))
         values$na.values <- sum(is.na(values$dataset.modified))
       },
       warning = function(warn){
@@ -40,6 +47,7 @@ shinyServer(function(input, output, session) {
   })
   
   updateValues <- reactive({
+    # Aktualizuje wartosi zmiennych (TO DO)
     return (NULL)
   })
   
@@ -60,6 +68,9 @@ shinyServer(function(input, output, session) {
         values$col.names.original <- colnames(values$dataset.original)
         values$col.names.modified <- values$col.names.original
         values$col.names.modified.num <- colnames(values$dataset.modified %>% select_if(is.numeric))
+        values$col.names.modified.fac <- colnames(values$dataset.modified %>% select_if(is.factor))
+        values$col.names.modified.cha <- colnames(values$dataset.modified %>% select_if(is.character))
+        values$col.names.modified.dat <- colnames(values$dataset.modified %>% select_if(lubridate::is.Date))
         values$na.values <- sum(is.na(values$dataset.modified))
         
         
@@ -75,7 +86,7 @@ shinyServer(function(input, output, session) {
   })
   
   observe({
-    # Aktualizuje nazwy kolumn przy wyborze kolumn
+    # Aktualizuje liste nazw kolumn przy wyborze kolumn
     shinyWidgets::updatePickerInput(
       session,
       inputId = 'select.cols',
@@ -85,7 +96,7 @@ shinyServer(function(input, output, session) {
   })
   
   observe({
-    # Aktualizuje nazwy kolumn do sortowania
+    # Aktualizuje liste nazw kolumn do sortowania
     updateSelectInput(
       session,
       inputId = 'sort.cols',
@@ -94,7 +105,7 @@ shinyServer(function(input, output, session) {
   })
   
   observe({
-    # Aktualizuje nazwy kolumn, w ktorych mozna uzupelniac wartosci puste
+    # Aktualizuje liste nazw kolumn, w ktorych mozna uzupelniac wartosci puste
     updateSelectInput(
       session,
       inputId = 'impute.col',
@@ -103,6 +114,96 @@ shinyServer(function(input, output, session) {
     )
   })
   
+  observe({
+    # Aktualizuje liste nazw kolumn do konwersji typu zmiennej
+    updateSelectInput(
+      session,
+      inputId = 'var.to.convert',
+      choices = values$col.names.modified
+      
+    )
+  })
+  
+  observeEvent(input$apply.convert, {
+    # Obsluguje i potwierdza konwersje typu zmiennej
+    # input$var.to.convert
+    # input$type.to.convert
+    if (!is.null(input$var.to.convert)) {
+      tryCatch({
+        if (input$type.to.convert == 'character') {
+          values$dataset.modified[input$var.to.convert] <- as.character(values$dataset.modified[input$var.to.convert])
+        }
+        
+        if (input$type.to.convert == 'numeric') {
+          values$dataset.modified[input$var.to.convert] <- as.numeric(values$dataset.modified[input$var.to.convert])
+        }
+        
+        if (input$type.to.convert == 'factor') {
+          values$dataset.modified[input$var.to.convert] <- as.factor(values$dataset.modified[input$var.to.convert])
+        }
+        
+        # TO DO
+        if (input$type.to.convert == 'date') {
+          values$dataset.modified[input$var.to.convert] <- as.Date(values$dataset.modified$input$var.to.convert,
+                                                                   tryFormats = c("%Y-%m-%d", "%Y/%m/%d", '%d/%m/%Y'))
+        }
+        
+        values$col.names.modified.num <- colnames(values$dataset.modified %>% select_if(is.numeric))
+        values$col.names.modified.fac <- colnames(values$dataset.modified %>% select_if(is.factor))
+        values$col.names.modified.cha <- colnames(values$dataset.modified %>% select_if(is.character))
+        values$col.names.modified.dat <- colnames(values$dataset.modified %>% select_if(lubridate::is.Date))
+      },
+      warning = function(warn){
+        showNotification(paste0(warn), type = 'warning', duration = 10, closeButton = TRUE)
+      },
+      error = function(err){
+        showNotification(paste0(err), type = 'err', duration = 10, closeButton = TRUE)
+      }
+      )
+    }
+    
+    
+  })
+  
+  observe({
+    # Aktualizuje liste nazw kolumn typu numeric
+    updateSelectInput(
+      session,
+      inputId = 'select.num',
+      choices = values$col.names.modified.num
+      
+    )
+  })
+  
+  observe({
+    # Aktualizuje liste nazw kolumn typu date
+    updateSelectInput(
+      session,
+      inputId = 'select.date',
+      choices = values$col.names.modified.dat
+      
+    )
+  })
+  
+  observe({
+    # Aktualizuje liste nazw kolumn typu factor
+    updateSelectInput(
+      session,
+      inputId = 'select.fac',
+      choices = values$col.names.modified.fac
+      
+    )
+  })
+  
+  observe({
+    # Aktualizuje liste nazw kolumn typu character
+    updateSelectInput(
+      session,
+      inputId = 'select.char',
+      choices = values$col.names.modified.cha
+      
+    )
+  })
   
   observeEvent(input$select.cols.btn, {
     # Potwierdza modyfikacje liczby kolumn
@@ -113,6 +214,9 @@ shinyServer(function(input, output, session) {
       
       values$col.names.modified <- colnames(values$dataset.modified)
       values$col.names.modified.num <- colnames(values$dataset.modified %>% select_if(is.numeric))
+      values$col.names.modified.fac <- colnames(values$dataset.modified %>% select_if(is.factor))
+      values$col.names.modified.cha <- colnames(values$dataset.modified %>% select_if(is.character))
+      values$col.names.modified.dat <- colnames(values$dataset.modified %>% select_if(lubridate::is.Date))
       values$na.values <- sum(is.na(values$dataset.modified))
     }
   })
@@ -187,8 +291,11 @@ shinyServer(function(input, output, session) {
     
   })
   
+  
+  
+  
   output$render.table <- DT::renderDT({
-    # Renderuje tabele w zakladce 'przetwarzanie'
+    # Renderuje tabele w zakladce 'eksploracja'
     if (is.null(input$input.file))
       return (NULL)
     values$dataset.modified

@@ -107,8 +107,7 @@ shinyUI(
                     
                     fluidRow(
                         column(12,
-                            tabBox(width = 4,
-                                height = box1.h,
+                            tabBox(width = 4, height = box1.h,
                                 
                                 tabPanel(
                                     title = 'Wybierz cechy',
@@ -125,12 +124,9 @@ shinyUI(
                                         actionButton('select.cols.btn', 'Potwierdz', width = 180)
                                     ) 
                                 )
-                                
                             ),
                             
-                            tabBox(
-                                width = 4, 
-                                height = box1.h,
+                            tabBox(width = 4, height = box1.h,
                                 
                                 tabPanel(
                                     title = 'Sortuj obserwacje wedlug cechy',
@@ -150,17 +146,11 @@ shinyUI(
                                            div(style = "text-align:center",
                                                checkboxInput('is.sort.desc', 'Sortuj malejaco', value = FALSE)
                                            )   
-                                           
                                     )
                                 )
-                                
-                                
-                                    
                             ),
                             
-                            tabBox(
-                                width = 4, 
-                                height = box1.h,
+                            tabBox(width = 4, height = box1.h,
                                 
                                 tabPanel(
                                     title = 'Usun wartosci puste',
@@ -179,7 +169,6 @@ shinyUI(
                                             'Srednia', 'Mediana', 'Zero')),
                                         actionButton('apply.impute', 'Uzupelnij', width = 180)
                                     )
-                                    
                                 ),
                                 
                                 tabPanel(
@@ -190,25 +179,82 @@ shinyUI(
                                         actionButton('apply.MICE', 'Zastosuj', width = 200)
                                     )
                                 )
+                            ),
+                        )
+                    ),
+                    
+                    fluidRow(
+                        column(12, align = 'center',
+                            tabBox(width = 6, height = box1.h,
+                                
+                                tabPanel(
+                                    title = "Konwertowanie zmiennych",
+                                    selectInput(
+                                        'var.to.convert',
+                                        label = 'Wybierz ceche',
+                                        choices = c()
+                                    ),
+                                    selectInput(
+                                        'type.to.convert',
+                                        label = 'Wybierz typ danych',
+                                        choices = c('numeric', 'character', 'factor', 'date')
+                                    ),
+                                    actionButton('apply.convert', 'Konwertuj')
+                                )
+                            ),
+                            
+                            tabBox(width = 6, height = box1.h,
+                                title = ""
                             )
                         )
                     ),
                     
                     fluidRow(
                         column(12,
-                            box(width = 12,
-                                DT::DTOutput('render.table'),
-                                shinyWidgets::dropdown(
-                                    downloadButton(
-                                        outputId = 'downloadBtn1',
-                                        label = 'Pobierz .csv'
-                                    ),
-                                    up = TRUE,
-                                    icon = icon('download')
-                                ))
+                               tabBox(width = 6, height = box1.h * 1.5, 
+                                      
+                                      tabPanel(
+                                          title = 'Filtrowanie zmiennych numerycznych',
+                                          selectInput(
+                                              'select.num',
+                                              label = 'Wybierz ceche',
+                                              choices = c()
+                                          )
+                                      ),
+                                      
+                                      tabPanel(
+                                          title = 'Filtrowanie dat',
+                                          selectInput(
+                                              'select.date',
+                                              label = 'Wybierz ceche',
+                                              choices = c()
+                                          )
+                                      )
+                               ),
+                               
+                               tabBox(width = 6, height = box1.h * 1.5,
+                                      
+                                      tabPanel(
+                                          title = 'Filtrowanie zmiennych kategorycznych',
+                                          selectInput(
+                                              'select.fac',
+                                              label = 'Wybierz ceche',
+                                              choices = c()
+                                          )
+                                          
+                                      ),
+                                      
+                                      tabPanel(
+                                          title = 'Filtrowanie zmiennych znakowych',
+                                          selectInput(
+                                              'select.char',
+                                              label = 'Wybierz ceche',
+                                              choices = c()
+                                          )
+                                      )  
+                               )
                         )
                     )
-                    
                 ),
                 
                 ########### EKSPLORACJA ###########
@@ -220,8 +266,15 @@ shinyUI(
                     fluidRow(
                         column(12,
                                box(width = 12,
-                                   collapsible = TRUE
-                               )
+                                   DT::DTOutput('render.table'),
+                                   shinyWidgets::dropdown(
+                                       downloadButton(
+                                           outputId = 'downloadBtn1',
+                                           label = 'Pobierz .csv'
+                                       ),
+                                       up = TRUE,
+                                       icon = icon('download')
+                                   ))
                         )
                     )
                     
@@ -238,7 +291,7 @@ shinyUI(
                 
                 tabItem(
                     tabName = 'menuInfo',
-                    tags$h1(class = 'tabTitle', 'Informacje o zbiorze danych')
+                    tags$h1(class = 'tabTitle', 'Informacje o aplikacji')
                 )
             )
         )
