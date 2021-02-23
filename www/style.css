@@ -8,6 +8,10 @@
     font-size: 30px;
 }
 
+li.dropdown>a {
+    padding-top: 12px;
+    padding-bottom: 5px;
+}
 
 /* SIDEBAR */
 
