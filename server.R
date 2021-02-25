@@ -7,15 +7,19 @@ library(lubridate)
 
 shinyServer(function(input, output, session) {
   values <- reactiveValues(         # ZMIENNE
-    dataset.original = NULL,        # Pierwotny wczytany dataset
+    dataset.original = NULL,        # Pierwotny, wczytany dataset
     dataset.modified = NULL,        # Zmodyfikowany dataset
     col.names.original = NULL,      # Wszystkie (oryginalne) nazwy kolumn (cech)
-    col.names.modified = NULL,      # Zmodyfikowane nazwy kolumn (cech)
+    col.names.modified = NULL,      # Zmodyfikowane nazwy kolumn (wszystkich cech)
     col.names.modified.num = NULL,  # Zmodyfikowane nazwy kolumn (tylko numeric)
     col.names.modified.fac = NULL,  # Zmodyfikowane nazwy kolumn (tylko factor)
     col.names.modified.cha = NULL,  # Zmodyfikowane nazwy kolumn (tylko character)
     col.names.modified.dat = NULL,  # Zmodyfikowane nazwy kolumn (tylko date)
-    na.values = 0)
+    selected.num = NULL,            # Zmienna, ktora przechwytuje nazwe wybranej zmiennej typu numeric
+    na.values = 0,
+    min.num = 0,
+    value.num = 0,
+    max.num = 1)
   
   observeEvent(input$input.file, {
     # Pierwsze wczytanie danych
@@ -25,7 +29,8 @@ shinyServer(function(input, output, session) {
           file = input$input.file$datapath,
           header = input$header,
           stringsAsFactors = input$stringAsFactors,
-          sep = input$sep)
+          sep = input$sep,
+          dec = input$dec)
         
         values$dataset.modified <- data.table::copy(values$dataset.original)
         values$col.names.original <- colnames(values$dataset.original)
@@ -59,7 +64,8 @@ shinyServer(function(input, output, session) {
           file = input$input.file$datapath,
           header = input$header,
           stringsAsFactors = input$stringAsFactors,
-          sep = input$sep
+          sep = input$sep,
+          dec = input$dec
         )
         if (!is.null(values$dataset.modified))
           # Przywrocenie dataset.modified do stanu poczatkowego
@@ -72,7 +78,6 @@ shinyServer(function(input, output, session) {
         values$col.names.modified.cha <- colnames(values$dataset.modified %>% select_if(is.character))
         values$col.names.modified.dat <- colnames(values$dataset.modified %>% select_if(lubridate::is.Date))
         values$na.values <- sum(is.na(values$dataset.modified))
-        
         
       },
       warning = function(warn){
@@ -110,7 +115,6 @@ shinyServer(function(input, output, session) {
       session,
       inputId = 'impute.col',
       choices = values$col.names.modified.num
-      
     )
   })
   
@@ -120,7 +124,6 @@ shinyServer(function(input, output, session) {
       session,
       inputId = 'var.to.convert',
       choices = values$col.names.modified
-      
     )
   })
   
@@ -161,8 +164,6 @@ shinyServer(function(input, output, session) {
       }
       )
     }
-    
-    
   })
   
   observe({
@@ -171,7 +172,6 @@ shinyServer(function(input, output, session) {
       session,
       inputId = 'select.num',
       choices = values$col.names.modified.num
-      
     )
   })
   
@@ -181,7 +181,6 @@ shinyServer(function(input, output, session) {
       session,
       inputId = 'select.date',
       choices = values$col.names.modified.dat
-      
     )
   })
   
@@ -191,7 +190,6 @@ shinyServer(function(input, output, session) {
       session,
       inputId = 'select.fac',
       choices = values$col.names.modified.fac
-      
     )
   })
   
@@ -201,8 +199,40 @@ shinyServer(function(input, output, session) {
       session,
       inputId = 'select.char',
       choices = values$col.names.modified.cha
-      
     )
+  })
+  
+  observe({
+    # Aktualizuje wlasciwosci suwaka
+    updateSliderInput(
+      session,
+      inputId = 'filter.num',
+      min = values$min.num,
+      max = values$max.num,
+      value = c(values$min.num, values$max.num)
+    )
+  })
+  
+  observeEvent(input$select.var.to.filter.num, {
+    # Potwierdza, ze wybrana zmienna ma zostac filtrem
+    values$selected.num <- input$select.num
+    
+    values$min.num <- min(values$dataset.modified[values$selected.num])
+    values$value.num <- c(
+      min(values$dataset.modified[values$selected.num]),
+      min(values$dataset.modified[values$selected.num])
+      )
+    values$max.num <- max(values$dataset.modified[values$selected.num])
+
+  })
+
+  observeEvent(input$apply.filter.num, {
+    # Potwierdza i dokonuje filtrowanie po zmiennej typu numeric
+    if (!is.null(input$input.file)) {
+      values$dataset.modified <- values$dataset.modified %>% 
+        filter(.data[[values$selected.num]] >= input$filter.num[1],
+               .data[[values$selected.num]] <= input$filter.num[2])
+    }
   })
   
   observeEvent(input$select.cols.btn, {
@@ -245,7 +275,6 @@ shinyServer(function(input, output, session) {
     }
   })
   
-  
   observeEvent(input$apply.impute, {
     # Potwierdza uzupelnienie wartosci pustych wybranych kolumn przy uzyciu wybranej metody uzupelniania
     if (!is.null(input$input.file)) {
@@ -276,8 +305,6 @@ shinyServer(function(input, output, session) {
       }
       
       )
-      
-      
     }
   })
   
@@ -288,11 +315,7 @@ shinyServer(function(input, output, session) {
       imp <- mice::mice(values$dataset.modified[, numerical])
       values$dataset.modified[, numerical] <- mice::complete(imp)
     }
-    
   })
-  
-  
-  
   
   output$render.table <- DT::renderDT({
     # Renderuje tabele w zakladce 'eksploracja'
@@ -314,7 +337,5 @@ shinyServer(function(input, output, session) {
     # Zwraca informacje o liczbie obserwacji zawierajacych wartosc NULL
     paste('Wartosci puste w zbiorze: ', values$na.values)
   })
-
-
   
 })

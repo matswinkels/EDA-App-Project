@@ -75,6 +75,15 @@ shinyUI(
                 ),
                 selected = ','
             ),
+            radioButtons(
+                inputId = 'dec',
+                label = 'Separator dziesietny',
+                choices = c(
+                    kropka = '.',
+                    przecinek = ','
+                ),
+                selected = '.'
+            ),
             
             actionButton('load.again', 'Zaladuj ponownie', width = 180),
             
@@ -196,7 +205,7 @@ shinyUI(
                                     ),
                                     selectInput(
                                         'type.to.convert',
-                                        label = 'Wybierz typ danych',
+                                        label = 'Wybierz docelowy typ danych',
                                         choices = c('numeric', 'character', 'factor', 'date')
                                     ),
                                     actionButton('apply.convert', 'Konwertuj')
@@ -210,7 +219,7 @@ shinyUI(
                     ),
                     
                     fluidRow(
-                        column(12,
+                        column(12, align = 'center',
                                tabBox(width = 6, height = box1.h * 1.5, 
                                       
                                       tabPanel(
@@ -219,7 +228,20 @@ shinyUI(
                                               'select.num',
                                               label = 'Wybierz ceche',
                                               choices = c()
-                                          )
+                                          ),
+                                          
+                                          actionButton('select.var.to.filter.num', 'Zatwierdz'),
+                                          
+                                          sliderInput(
+                                              'filter.num',
+                                              min = 0,
+                                              max = 0,
+                                              value = c(0, 0),
+                                              label = NULL,
+                                              dragRange = TRUE
+                                          ),
+                                          
+                                          actionButton('apply.filter.num', 'Filtruj')
                                       ),
                                       
                                       tabPanel(
