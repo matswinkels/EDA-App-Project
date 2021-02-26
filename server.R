@@ -19,7 +19,15 @@ shinyServer(function(input, output, session) {
     na.values = 0,
     min.num = 0,
     value.num = 0,
-    max.num = 1)
+    max.num = 1,
+    dataset.histogram = NULL,
+    dataset.scatter = NULL,
+    dataset.boxplot = NULL,
+    show.menu.visualise = TRUE)
+  
+  # addCssClass(selector = "a[data-value='menuInfo']", class = "inactive-link")
+  
+  ######### PRZETWARZANIE ############
   
   observeEvent(input$input.file, {
     # Pierwsze wczytanie danych
@@ -87,6 +95,29 @@ shinyServer(function(input, output, session) {
         showNotification(paste0(err), type = 'err', duration = 8, closeButton = TRUE)
       }
       )
+    }
+  })
+  
+  observeEvent(input$approve.data, {
+  # Obsluguje przycisk, ktory powoduje zatwierdzenie przetwarzanego zbioru danych (umozliwia rozpoczecie wizualizacji)
+    if (!is.null(values$dataset.modified)) {
+      values$show.menu.visualise <- TRUE
+      
+      values$dataset.histogram <- data.table::copy(values$dataset.modified)
+      values$dataset.scatter <- data.table::copy(values$dataset.modified)
+      values$dataset.boxplot <- data.table::copy(values$dataset.modified)
+    }
+    
+  })
+  
+  output$menuVisualise <- renderMenu({
+    # renderuje sidebar menu dla zakladki 'wizualizacja'
+    if (values$show.menu.visualise == TRUE) {
+      menuItem(
+        text = 'Wizualizacja', tabName = 'menuVisualise', icon = icon('chart-area'),
+        menuSubItem('Histogram', tabName = 'menuHist'),
+        menuSubItem('Wykres rozrzutu', tabName = 'menuScatter'),
+        menuSubItem('Wykres pudelkowy', tabName = 'menuBoxplot'))
     }
   })
   
@@ -232,6 +263,15 @@ shinyServer(function(input, output, session) {
       values$dataset.modified <- values$dataset.modified %>% 
         filter(.data[[values$selected.num]] >= input$filter.num[1],
                .data[[values$selected.num]] <= input$filter.num[2])
+      
+      values$min.num <- min(values$dataset.modified[values$selected.num])
+      values$value.num <- c(
+        min(values$dataset.modified[values$selected.num]),
+        min(values$dataset.modified[values$selected.num])
+      )
+      values$max.num <- max(values$dataset.modified[values$selected.num])
+      
+      
     }
   })
   
@@ -317,12 +357,7 @@ shinyServer(function(input, output, session) {
     }
   })
   
-  output$render.table <- DT::renderDT({
-    # Renderuje tabele w zakladce 'eksploracja'
-    if (is.null(input$input.file))
-      return (NULL)
-    values$dataset.modified
-  })
+  
   
   datasetDownload <- reactive(values$dataset.modified)
   output$downloadBtn1 <- downloadHandler(
@@ -337,5 +372,26 @@ shinyServer(function(input, output, session) {
     # Zwraca informacje o liczbie obserwacji zawierajacych wartosc NULL
     paste('Wartosci puste w zbiorze: ', values$na.values)
   })
+  
+  ############ EKSPLORACJA #############
+  
+  
+  output$render.table <- DT::renderDT({
+    # Renderuje tabele w zakladce 'eksploracja'
+    if (is.null(input$input.file))
+      return (NULL)
+    values$dataset.modified
+  })
+  
+  
+  ########### WIZUALIZACJA ############
+  
+  output$render.table.vis <- DT::renderDT({
+    # Renderuje tabele w zakladce 'eksploracja'
+    if (is.null(input$input.file))
+      return (NULL)
+    values$dataset.histogram
+  })
+  
   
 })

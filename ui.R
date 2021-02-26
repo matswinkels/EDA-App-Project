@@ -1,6 +1,7 @@
 library(shiny)
 library(shinydashboard)
 library(shinyWidgets)
+library(shinyjs)
 
 box1.h <- 250
 
@@ -34,6 +35,7 @@ shinyUI(
         ########### SIDEBAR ########### 
         
         shinydashboard::dashboardSidebar(width = 300,
+            useShinyjs(),
             tags$head(
                 tags$link(
                     rel = 'stylesheet',
@@ -87,13 +89,32 @@ shinyUI(
             
             actionButton('load.again', 'Zaladuj ponownie', width = 180),
             
-            shinydashboard::sidebarMenu(
+            shinydashboard::sidebarMenu(id = 'sidebar',
+                # tags$head(
+                #   tags$style(
+                #       ".inactive-link {
+                #             pointer-events: none;
+                #             cursor: default
+                #             }
+                #       "
+                #   )  
+                # ),
                 menuItem(text = 'Home', tabName = 'menuHome', icon = icon('home')),
                 menuItem(text = 'Przetwarzanie', tabName = 'menuPrepare', icon = icon('cog')),
                 menuItem(text = 'Eksploracja', tabName = 'menuExplore', icon = icon('map')),
-                menuItem(text = 'Wizualizacja', tabName = 'menuVisualise', icon = icon('chart-area')),
+                menuItemOutput('menuVisualise'),
+                # menuItem(
+                #     text = 'Wizualizacja', tabName = 'menuVisualise', icon = icon('chart-area'),
+                #     menuSubItem('Histogram', tabName = 'menuHist'),
+                #     menuSubItem('Wykres rozrzutu', tabName = 'menuScatter')),
                 menuItem(text = 'Informacje o aplikacji', tabName = 'menuInfo', icon = icon('info-circle'))
-            )
+                
+            ),
+            
+            actionButton(
+                'approve.data', 'Zatwierdz dane', width = 180, 
+                style = 'background-color: #00802b; border-color: #00802b; font-weight: bold; color: white')
+            
         ),
         
         ########### BODY ########### 
@@ -112,8 +133,8 @@ shinyUI(
                 
                 tabItem(
                     tabName = 'menuPrepare',
-                    tags$h1(class = 'tabTitle', 'Przetwarzanie  zbioru danych'),
-                    
+                    tags$h1(class = 'tabTitle', '', style = 'padding-top: 5px;'),
+
                     fluidRow(
                         column(12,
                             tabBox(width = 4, height = box1.h,
@@ -220,7 +241,7 @@ shinyUI(
                     
                     fluidRow(
                         column(12, align = 'center',
-                               tabBox(width = 6, height = box1.h * 1.5, 
+                               tabBox(width = 6, height = box1.h * 1.1, 
                                       
                                       tabPanel(
                                           title = 'Filtrowanie zmiennych numerycznych',
@@ -254,7 +275,7 @@ shinyUI(
                                       )
                                ),
                                
-                               tabBox(width = 6, height = box1.h * 1.5,
+                               tabBox(width = 6, height = box1.h * 1.1,
                                       
                                       tabPanel(
                                           title = 'Filtrowanie zmiennych kategorycznych',
@@ -306,9 +327,27 @@ shinyUI(
                 
                 tabItem(
                     tabName = 'menuVisualise',
-                    tags$h1(class = 'tabTitle', 'Wizualizacja zbioru danych'),
+                    tags$h1(class = 'tabTitle', 'Wizualizacja zbioru danych')
+                    
+                    # DT::DTOutput('render.table.vis')
                 ),
                 
+                tabItem(
+                    tabName = 'menuHist',
+                    tags$h1(class = 'tabTitle', 'Histogram')
+                ),
+                
+                tabItem(
+                    tabName = 'menuScatter',
+                    tags$h1(class = 'tabTitle', 'Wykres rozrzutu')
+                ),
+                
+                tabItem(
+                    tabName = 'menuBoxplot',
+                    tags$h1(class = 'tabTitle', 'Wykres pudelkowy')
+                ),
+                
+ 
                 ########### INFO ###########
                 
                 tabItem(
